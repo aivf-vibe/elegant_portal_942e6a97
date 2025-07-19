@@ -157,13 +157,10 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Parallax effect for hero section
+// Smooth scrolling behavior
 window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    }
+    // Removed parallax effect to prevent UI issues
+    // Smooth scroll is handled by CSS
 });
 
 // Mining dashboard simulation
@@ -177,16 +174,122 @@ function updateMiningStats() {
             '0.002' + Math.floor(Math.random() * 100).toString().padStart(2, '0')
         ];
         
+        // Update mining stats but skip the like count
         stats.forEach((stat, index) => {
-            if (newValues[index]) {
+            if (newValues[index] && !stat.id.includes('like')) {
                 stat.textContent = newValues[index];
             }
         });
     }
 }
 
+// Like button functionality
+let likeCount = 1247;
+let isLiked = localStorage.getItem('cryptoMineLiked') === 'true';
+
+function updateLikeDisplay() {
+    const likeCountElement = document.getElementById('like-count');
+    const likeBtn = document.getElementById('like-btn');
+    
+    if (likeCountElement) {
+        likeCountElement.textContent = likeCount.toLocaleString();
+    }
+    
+    if (likeBtn) {
+        if (isLiked) {
+            likeBtn.classList.add('liked');
+        } else {
+            likeBtn.classList.remove('liked');
+        }
+    }
+}
+
+function handleLike() {
+    const likeBtn = document.getElementById('like-btn');
+    const likeCountElement = document.getElementById('like-count');
+    
+    if (!likeBtn || !likeCountElement) return;
+    
+    likeBtn.addEventListener('click', () => {
+        if (!isLiked) {
+            likeCount++;
+            isLiked = true;
+            localStorage.setItem('cryptoMineLiked', 'true');
+            
+            // Animate the count change
+            animateCounter(likeCountElement, likeCount, 500);
+            
+            // Add liked class with animation
+            likeBtn.classList.add('liked');
+            
+            // Simulate real-time updates from other users
+            simulateRealTimeLikes();
+        } else {
+            likeCount--;
+            isLiked = false;
+            localStorage.setItem('cryptoMineLiked', 'false');
+            likeCountElement.textContent = likeCount.toLocaleString();
+            likeBtn.classList.remove('liked');
+        }
+    });
+}
+
+// Simulate real-time like updates from other users
+function simulateRealTimeLikes() {
+    const likeCountElement = document.getElementById('like-count');
+    if (!likeCountElement) return;
+    
+    // Random like increments from other users
+    const randomLikes = [1, 2, 3, 1, 1, 2, 1, 1, 1, 2];
+    let delay = 2000;
+    
+    randomLikes.forEach((increment, index) => {
+        setTimeout(() => {
+            if (Math.random() > 0.7) { // 30% chance of new like
+                likeCount += increment;
+                updateLikeDisplay();
+                
+                // Add a subtle pulse effect when new likes come in
+                likeCountElement.style.animation = 'pulse 0.5s ease';
+                setTimeout(() => {
+                    likeCountElement.style.animation = '';
+                }, 500);
+            }
+        }, delay * (index + 1) + Math.random() * 1000);
+    });
+}
+
+// Add pulse animation
+const pulseStyle = document.createElement('style');
+pulseStyle.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+`;
+document.head.appendChild(pulseStyle);
+
 // Update mining stats every 5 seconds
 setInterval(updateMiningStats, 5000);
+
+// Initialize like functionality
+document.addEventListener('DOMContentLoaded', () => {
+    handleLike();
+    updateLikeDisplay();
+    
+    // Load saved like count from localStorage or use default
+    const savedCount = localStorage.getItem('cryptoMineLikeCount');
+    if (savedCount) {
+        likeCount = parseInt(savedCount);
+        updateLikeDisplay();
+    }
+    
+    // Save like count periodically
+    setInterval(() => {
+        localStorage.setItem('cryptoMineLikeCount', likeCount.toString());
+    }, 10000);
+});
 
 // Lazy loading for images
 const imageObserver = new IntersectionObserver((entries) => {
